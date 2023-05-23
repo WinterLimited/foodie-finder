@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
-import axios from 'axios';
-import RestaurantCard from './RestaurantCard'; // RestaurantCard 컴포넌트를 import
+import RestaurantCard from './RestaurantCard';
+import { fetchRestaurantsFromAPI } from './api';
+import { loadUserVectorFromLocalStorage, calculateCosineSimilarity } from './utils';
 
-interface Restaurant {
+export interface Restaurant {
     name: string;
     vicinity: string;
     rating: number;
+    price_level?: number;
+    types?: string[];
+    cosineSimilarity?: number;
 }
 
 class PlacesPage extends Component {
@@ -18,10 +22,13 @@ class PlacesPage extends Component {
     componentDidMount() {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                this.setState({
-                    userLatitude: position.coords.latitude,
-                    userLongitude: position.coords.longitude,
-                }, this.fetchRestaurants); // 위치를 얻은 후 fetchRestaurants 메서드를 호출
+                this.setState(
+                    {
+                        userLatitude: position.coords.latitude,
+                        userLongitude: position.coords.longitude,
+                    },
+                    this.fetchRestaurants
+                );
             },
             (error) => {
                 console.log('Error:', error);
@@ -32,22 +39,53 @@ class PlacesPage extends Component {
     fetchRestaurants = () => {
         const { userLatitude, userLongitude } = this.state;
         const apiKey = process.env.REACT_APP_API_KEY;
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const apiUrl = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-        const requestUrl = `${proxyUrl}${apiUrl}?location=${userLatitude},${userLongitude}&radius=1500&type=restaurant&key=${apiKey}`;
 
-        // Google Places API 호출
-        axios.get(requestUrl)
-            .then(response => {
-                // API 응답에서 음식점 목록 추출
-                console.log(response.data);
-                const restaurantData: Restaurant[] = response.data.results;
-                this.setState({ restaurants: restaurantData });
-            })
-            .catch(error => {
-                console.log('Error:', error);
-            });
-    }
+        if (userLatitude && userLongitude && apiKey) {
+            fetchRestaurantsFromAPI(userLatitude, userLongitude, apiKey)
+                .then((response) => {
+                    const userVector = loadUserVectorFromLocalStorage();
+                    const restaurantData = response.data.results;
+
+                    let sortedRestaurants;
+
+                    if (userVector.length === 0) {
+                        // 최초 검색, 별도의 유사도 검증 없이 음식점 나열
+                        // If user vector is empty, sort restaurants based on a default order
+                        sortedRestaurants = restaurantData.sort((a, b) => {
+                            // Implement your sorting logic here
+                            // For example, sort by rating in descending order
+                            return b.rating - a.rating;
+                        });
+                    } else {
+                        // Calculate cosine similarity and sort restaurants based on similarity
+                        const restaurantDataWithSimilarity = calculateCosineSimilarity(userVector, restaurantData);
+                        sortedRestaurants = restaurantDataWithSimilarity.sort((a, b) => {
+                            if (b.cosineSimilarity && a.cosineSimilarity) {
+                                return b.cosineSimilarity - a.cosineSimilarity;
+                            }
+                            return 0;
+                        });
+                    }
+
+                    this.setState({ restaurants: sortedRestaurants });
+                })
+                .catch((error) => {
+                    console.log('Error:', error);
+                });
+        }
+    };
+
+
+    handleSelectRestaurant = (restaurant: Restaurant) => {
+        console.log('seleRest');
+        const selectedRestaurantDetails = {
+            price_level: restaurant.price_level,
+            types: restaurant.types,
+            rating: restaurant.rating,
+        };
+
+        localStorage.setItem('selectedRestaurant', JSON.stringify(selectedRestaurantDetails));
+    };
 
     render() {
         const { restaurants } = this.state;
@@ -56,7 +94,11 @@ class PlacesPage extends Component {
             <div>
                 <h2>Recommended Restaurants</h2>
                 {restaurants.map((restaurant, index) => (
-                    <RestaurantCard key={index} restaurant={restaurant} />
+                    <RestaurantCard
+                        key={index}
+                        restaurant={restaurant}
+                        onSelect={this.handleSelectRestaurant}
+                    />
                 ))}
             </div>
         );
