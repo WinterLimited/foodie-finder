@@ -50,7 +50,8 @@ const PlacesPage: React.FC = () => {
 
                     let sortedRestaurants;
 
-                    // userVector가 설정되지 않았으면 기본정렬
+                    console.log(userVector);
+                    // userVector가 설정되지 않았으면 기본 별점 순으로 정렬
                     if (userVector.length === 0) {
                         sortedRestaurants = restaurantData.sort((a, b) => {
                             return b.rating - a.rating;
