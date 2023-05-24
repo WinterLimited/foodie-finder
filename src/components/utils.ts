@@ -2,7 +2,7 @@ import { Restaurant } from './PlacesPage';
 import { cosineSimilarity } from './cosineSimilarity';
 
 export const loadUserVectorFromLocalStorage = (): number[] => {
-    const userVectorString = localStorage.getItem('userVector');
+    const userVectorString = localStorage.getItem('selectedRestaurant');
     if (userVectorString) {
         return JSON.parse(userVectorString) as number[];
     }
