@@ -8,7 +8,7 @@ interface RestaurantCardProps {
 }
 
 const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onSelect }) => {
-    const { name, vicinity, rating } = restaurant;
+    const { name, vicinity, rating, cosineSimilarity } = restaurant;
 
     const handleRestaurantClick = () => {
         window.open(`https://www.google.com/search?q=${encodeURIComponent(name)}`);
@@ -23,6 +23,10 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onSelect })
             >
                 <p>주소: {vicinity}</p>
                 <p>별점: {rating}</p>
+                {cosineSimilarity ?
+                    (<p>맞춤도: {cosineSimilarity * 100}</p>) : ''
+                }
+
             </Card>
         </div>
     );

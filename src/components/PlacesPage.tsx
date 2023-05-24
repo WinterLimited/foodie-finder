@@ -50,9 +50,8 @@ const PlacesPage: React.FC = () => {
 
                     let sortedRestaurants;
 
-                    console.log(userVector);
                     // userVector가 설정되지 않았으면 평점순으로 정렬
-                    if (userVector.length === 0) {
+                    if (userVector.rating === 0) {
                         sortedRestaurants = restaurantData.sort((a, b) => {
                             return b.rating - a.rating;
                         });
@@ -69,6 +68,7 @@ const PlacesPage: React.FC = () => {
                         });
                     }
 
+
                     setRestaurants(sortedRestaurants);
                     setLoading(false);
                 })
@@ -81,7 +81,7 @@ const PlacesPage: React.FC = () => {
 
 
     const handleSelectRestaurant = (restaurant: Restaurant) => {
-        console.log('seleRest');
+        console.log('userVector changed');
         const selectedRestaurantDetails = {
             price_level: restaurant.price_level,
             types: restaurant.types,
