@@ -23,9 +23,9 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onSelect })
             >
                 <p>주소: {vicinity}</p>
                 <p>별점: {rating}</p>
-                {cosineSimilarity ?
-                    (<p>맞춤도: {cosineSimilarity * 100}</p>) : ''
-                }
+                {cosineSimilarity != null && (
+                    <p>맞춤도: {(cosineSimilarity * 100).toFixed(2)}</p>
+                )}
 
             </Card>
         </div>
